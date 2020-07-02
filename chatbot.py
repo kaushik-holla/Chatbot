@@ -125,7 +125,7 @@ for word, count in word2count.items():
 # Adding start and end tokens to dictionaries.
 # <EOS> end of string
 # <SOS> Start of string
-tokens = ['<PAD>', '<EOS>', '<SOS>', 'OUT']
+tokens = ['<PAD>', '<EOS>', '<SOS>', '<OUT>']
 for token in tokens:
     questionwords2int[token] = len(questionwords2int) + 1
 for token in tokens:
@@ -143,8 +143,29 @@ for i in range(len(clean_answers)):
     clean_answers[i] += ' <EOS>'
 
 #Chatbot 16
+# Translating all questions and answers into integers 
+# and replacing all the words that were filtered out by <OUT>
+questions_to_int = []
+for questions in clean_questions:
+    ints = []
+    for words in questions.split():
+        if words not in questionwords2int:
+            ints.append(questionwords2int['<OUT>'])
+        else:
+            ints.append(questionwords2int[words])    
+    questions_to_int.append(ints)
 
+answers_to_int = []
+for answers in clean_answers:
+    ints = []
+    for words in answers.split():
+        if words not in answerwords2int:
+            ints.append(answerwords2int['<OUT>'])
+        else:
+            ints.append(answerwords2int[words])
+    answers_to_int.append(ints)
 
+#Chatbot 17
 
 
 
