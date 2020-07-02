@@ -131,7 +131,12 @@ for token in tokens:
 for token in tokens:
     answerwords2int[token] = len(answerwords2int) + 1
     
+#Chatbot 14
+#Creating inverse dictionary of answerwords2int
+# This inverse is required for building a sec2sec model
+answerint2words = {w_i:w for w, w_i in answerwords2int.items()}
 
+#Chatbot 15
 
 
 
