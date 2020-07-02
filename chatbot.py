@@ -137,8 +137,12 @@ for token in tokens:
 answerint2words = {w_i:w for w, w_i in answerwords2int.items()}
 
 #Chatbot 15
+# Adding end of string token to end of every answer
+# <EOS> is required for decoding the model in sec2sec
+for i in range(len(clean_answers)):
+    clean_answers[i] += ' <EOS>'
 
-
+#Chatbot 16
 
 
 
