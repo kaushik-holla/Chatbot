@@ -166,7 +166,16 @@ for answers in clean_answers:
     answers_to_int.append(ints)
 
 #Chatbot 17
-
+# Sorting question and answers by the length of questions/answers to speed up the training.
+sorted_clean_question = []
+sorted_clean_answers = []
+# Limiting the length of questions to 25 words starting with 1.
+for length in range(1, 26):
+    for i in enumerate(questions_to_int):
+        if len(i[1]) == length:
+            sorted_clean_question.append(questions_to_int[i[0]])
+            # Since questions and answers need to have the same index, we append answers too
+            sorted_clean_answers.append(answers_to_int[i[0]])
 
 
 
