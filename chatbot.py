@@ -177,6 +177,18 @@ for length in range(1, 26):
             # Since questions and answers need to have the same index, we append answers too
             sorted_clean_answers.append(answers_to_int[i[0]])
 
+# Building Seq2seq model
+
+#chatbot 18
+# Creating placeholders for input and target.
+def model_input():
+    inputs = tf.placeholder(tf.int32, [None, None], name= 'input')
+    targets = tf.placeholder(tf.int32, [None, None], name= 'target')
+    lr = tf.placeholder(tf.float32, name= 'learning_rate')
+    keep_prob = tf.placeholder(tf.float32, name= 'keep_prob')
+    return inputs, targets, lr, keep_prob
+
+
 
 
 
