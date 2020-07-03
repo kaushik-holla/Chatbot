@@ -188,6 +188,21 @@ def model_input():
     keep_prob = tf.placeholder(tf.float32, name= 'keep_prob')
     return inputs, targets, lr, keep_prob
 
+# chatbot 19
+# Before creating the encoding and decoding layers, we need to preprocessing the targets
+# The decoder only accepts certain form of targets. [ Decoders are nothing but LSTM neural networks]
+# The input to decoder must be in batches. It doesnt accept single inputs.
+# Each of the answers in the batches must start with <SOS>
+def preprocess_targets(targets, word2int, batch_size):
+    # Creating a new matrix tensor and filling it with <SOS>
+    # Matrix will have batch size number of rows and only one column containing <SOS>
+    left_side = tf.fill([batch_size, 1], word2int['<SOS>'])
+    # Slicing a part of the matrix 
+    # Contains matrix having batchsize number of rows and n-1 columns i.e last column excluded.
+    right_side = tf.strided_slice(targets, [0, 0], [batch_size, -1], [1, 1])
+    # Now we are concatinating 
+    preprocessed_targets = tf.concat([left_side, right_side], 1)
+    return preprocessed_targets
 
 
 
