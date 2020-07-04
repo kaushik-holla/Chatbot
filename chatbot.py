@@ -177,8 +177,57 @@ for length in range(1, 26):
             # Since questions and answers need to have the same index, we append answers too
             sorted_clean_answers.append(answers_to_int[i[0]])
 
+# Building Seq2seq model
 
+#chatbot 18
+# Creating placeholders for input and target.
+def model_input():
+    inputs = tf.placeholder(tf.int32, [None, None], name= 'input')
+    targets = tf.placeholder(tf.int32, [None, None], name= 'target')
+    lr = tf.placeholder(tf.float32, name= 'learning_rate')
+    keep_prob = tf.placeholder(tf.float32, name= 'keep_prob')
+    return inputs, targets, lr, keep_prob
 
+# chatbot 19
+# Before creating the encoding and decoding layers, we need to preprocessing the targets
+# The decoder only accepts certain form of targets. [ Decoders are nothing but LSTM neural networks]
+# The input to decoder must be in batches. It doesnt accept single inputs.
+# Each of the answers in the batches must start with <SOS>
+def preprocess_targets(targets, word2int, batch_size):
+    # Creating a new matrix tensor and filling it with <SOS>
+    # Matrix will have batch size number of rows and only one column containing <SOS>
+    left_side = tf.fill([batch_size, 1], word2int['<SOS>'])
+    # Slicing a part of the matrix 
+    # Contains matrix having batchsize number of rows and n-1 columns i.e last column excluded.
+    right_side = tf.strided_slice(targets, [0, 0], [batch_size, -1], [1, 1])
+    # Now we are concatinating 
+    preprocessed_targets = tf.concat([left_side, right_side], 1)
+    return preprocessed_targets
+
+# Chatbot 20
+# We are creating encoder of RNN model as it comes first in seq2seq model.
+# Encoder is created using LSTM
+def encoder_rnn_layer(rnn_inputs, rnn_size, number_layers, keep_prob, sequence_length):
+    # Input Parameters
+    """
+    rnn_input: This corresponds to model_inputs i.e the basic inputs that are given to rnn models.
+    rnn_size: Size of the rnn input i.e number of input tensors.
+    number_layers: Number of layers in neural network
+    keep_prob: This is used for dropout regularisation
+    sequence_length: List of length of each questions in the batch
+    """
+    # We will define an object call lstm which calls basic LSTM Cell.    
+    lstm = tf.contib.rnn.BasicLSTMCell(rnn_size)
+    # Creating a dropout wrapper around lstm. 
+    lstm_dropout = tf.contrib.rnn.DropoutWrapper(lstm, input_keep_prob = keep_prob)
+    # RNN have cell and state variable so now we are creating cell
+    encoder_cell = tf.contrib.rnn.MultiRNNCell([lstm_dropout] * number_layers)
+    encoder_output, encoder_state = tf.nn.bidirectional_dynamic_rnn(cell_fw = encoder_cell,
+                                                                    cell_bw = encoder_cell,
+                                                                    sequence_length = sequence_length,
+                                                                    inputs = rnn_inputs,
+                                                                    dtype = tf.float32)
+    return encoder_state
 
 
 
