@@ -204,8 +204,30 @@ def preprocess_targets(targets, word2int, batch_size):
     preprocessed_targets = tf.concat([left_side, right_side], 1)
     return preprocessed_targets
 
-
-
+# Chatbot 20
+# We are creating encoder of RNN model as it comes first in seq2seq model.
+# Encoder is created using LSTM
+def encoder_rnn_layer(rnn_inputs, rnn_size, number_layers, keep_prob, sequence_length):
+    # Input Parameters
+    """
+    rnn_input: This corresponds to model_inputs i.e the basic inputs that are given to rnn models.
+    rnn_size: Size of the rnn input i.e number of input tensors.
+    number_layers: Number of layers in neural network
+    keep_prob: This is used for dropout regularisation
+    sequence_length: List of length of each questions in the batch
+    """
+    # We will define an object call lstm which calls basic LSTM Cell.    
+    lstm = tf.contib.rnn.BasicLSTMCell(rnn_size)
+    # Creating a dropout wrapper around lstm. 
+    lstm_dropout = tf.contrib.rnn.DropoutWrapper(lstm, input_keep_prob = keep_prob)
+    # RNN have cell and state variable so now we are creating cell
+    encoder_cell = tf.contrib.rnn.MultiRNNCell([lstm_dropout] * number_layers)
+    encoder_output, encoder_state = tf.nn.bidirectional_dynamic_rnn(cell_fw = encoder_cell,
+                                                                    cell_bw = encoder_cell,
+                                                                    sequence_length = sequence_length,
+                                                                    inputs = rnn_inputs,
+                                                                    dtype = tf.float32)
+    return encoder_state
 
 
 
