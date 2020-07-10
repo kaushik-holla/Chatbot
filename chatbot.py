@@ -9,6 +9,7 @@ import numpy as np
 import tensorflow as tf
 import re
 import time
+tf.disable_v2_behavior()
 
 # Importing the dataset
 lines = open('movie_lines.txt').read().split('\n')
@@ -34,7 +35,6 @@ for conversation in conversations[:-1]:
     # This list we are appending to create a list of conversations. 
     conversations_id.append(_conversation.split(','))
     
-# Chatbot 8
 # Getting seperate questions and answers.
 # First we will get question and then answers and note that they both need to be of the same size.
 # The answer to question at index i need to be at index i in the answer list.
@@ -49,7 +49,6 @@ for conversation in conversations_id:
         questions.append(id2line[conversation[i]])
         answers.append(id2line[conversation[i+1]])
 
-# Chatbot 9
 # Cleaning the text. 
 def clean_text(text):
     # Convert all the text to lowercase
@@ -69,7 +68,6 @@ def clean_text(text):
     text = re.sub(r"[-()\"#/@;:<>{}+=~|.?,]", "", text)
     return text
 
-# Chatbot 10
 # Cleaning the Questions and Answers
 clean_questions = []
 for question in questions:
@@ -80,7 +78,6 @@ clean_answers = []
 for answer in answers:
     clean_answers.append(clean_text(answer))
 
-# Chatbot 11
 # Removing the high frequency words.
 # To do that we create a dictionary that contains words along with its frequence.
 word2count = {}
@@ -101,7 +98,6 @@ for answer in clean_answers:
         else:
             word2count[word] = 1
         
-# chatbot 12
 #Tokenisation and filtering out non essential words. 
 # We will take consider a threshold and we remove all the words that are greater than threshold.
 # Along with removing the threshold, we also tokenize the sentence.
@@ -121,7 +117,6 @@ for word, count in word2count.items():
         answerwords2int[word] = word_number
         word_number += 1
 
-#Chatbot 13
 # Adding start and end tokens to dictionaries.
 # <EOS> end of string
 # <SOS> Start of string
@@ -136,13 +131,11 @@ for token in tokens:
 # This inverse is required for building a sec2sec model
 answerint2words = {w_i:w for w, w_i in answerwords2int.items()}
 
-#Chatbot 15
 # Adding end of string token to end of every answer
 # <EOS> is required for decoding the model in sec2sec
 for i in range(len(clean_answers)):
     clean_answers[i] += ' <EOS>'
 
-#Chatbot 16
 # Translating all questions and answers into integers 
 # and replacing all the words that were filtered out by <OUT>
 questions_to_int = []
@@ -165,7 +158,6 @@ for answers in clean_answers:
             ints.append(answerwords2int[words])
     answers_to_int.append(ints)
 
-#Chatbot 17
 # Sorting question and answers by the length of questions/answers to speed up the training.
 sorted_clean_question = []
 sorted_clean_answers = []
@@ -179,7 +171,6 @@ for length in range(1, 26):
 
 # Building Seq2seq model
 
-#chatbot 18
 # Creating placeholders for input and target.
 def model_input():
     inputs = tf.placeholder(tf.int32, [None, None], name= 'input')
@@ -188,7 +179,6 @@ def model_input():
     keep_prob = tf.placeholder(tf.float32, name= 'keep_prob')
     return inputs, targets, lr, keep_prob
 
-# chatbot 19
 # Before creating the encoding and decoding layers, we need to preprocessing the targets
 # The decoder only accepts certain form of targets. [ Decoders are nothing but LSTM neural networks]
 # The input to decoder must be in batches. It doesnt accept single inputs.
@@ -204,7 +194,6 @@ def preprocess_targets(targets, word2int, batch_size):
     preprocessed_targets = tf.concat([left_side, right_side], 1)
     return preprocessed_targets
 
-# Chatbot 20
 # We are creating encoder of RNN model as it comes first in seq2seq model.
 # Encoder is created using LSTM
 def encoder_rnn_layer(rnn_inputs, rnn_size, number_layers, keep_prob, sequence_length):
@@ -229,11 +218,38 @@ def encoder_rnn_layer(rnn_inputs, rnn_size, number_layers, keep_prob, sequence_l
                                                                     dtype = tf.float32)
     return encoder_state
 
+# Chatbot 21
+# Decoder RNN Layer
+# This is done in two steps.
+# 1. Decode the training set.
+# 2. Decode the validation set.
 
-
-
-
-
+def decode_training_set(encoder_state, decoder_cell, decoder_embadded_input, sequence_length, decoder_scope, output_function, keep_prob, batch_size):
+"""
+    encoder_state: Returned by encoder_rnn_layer
+    decoder_cell: Cell from Decoder Recurrent Neural Network.
+    decoder_embadded_input: This is the cell on which we apply embadding. // check embadding from tensorflow document.
+    decoder_scope: Refer to tf.variable_scope class in tensorflow. Decoder scope will be an object of variable scope.
+    output_function: 
+    keep_prob: To apply dropout regularisation
+    batch_size: We will be working with batch size.
+"""
+    # First we will be getting the attention state.
+    attention_states = tf.zeros([batch_size, 1, decoder_cell.output_size])
+    attention_keys, attention_values, attention_score_function, attention_construct_function = tf.contrib.seq2seq.prepare_attention(attention_states, attention_option = "bahdanau", num_units = decoder_cell.output_size)
+    training_decoder_function = tf.contrib.seq2seq.attention_decoder_fn_train(encoder_state[0],
+                                                                              attention_keys,
+                                                                              attention_values,
+                                                                              attention_score_function,
+                                                                              attention_construct_function,
+                                                                              name = "attn_dec_train")
+    decoder_output, decoder_final_state, decoder_final_context_state = tf.contrib.seq2seq.dynamic_rnn_decoder(decoder_cell,
+                                                                                                              training_decoder_function,
+                                                                                                              decoder_embedded_input,
+                                                                                                              sequence_length,
+                                                                                                              scope = decoding_scope)
+    decoder_output_dropout = tf.nn.dropout(decoder_output, keep_prob)
+    return output_function(decoder_output_dropout)
 
 
 
